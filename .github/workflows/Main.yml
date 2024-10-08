@@ -76,7 +76,13 @@ jobs:
 
     - name: Build
       shell: bash
-      run:  make release
+      run: |
+        PREFIX=${PWD}/install
+        export COMMON_CMAKE_VARS="-DCMAKE_INSTALL_PREFIX=${PREFIX}"
+        echo "LD_LIBRARY_PATH=${PREFIX}/lib" >> "${GITHUB_ENV}"
+        echo "PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig" >> "${GITHUB_ENV}"
+        make release
+        cmake --install build/release
 
     - name: Output version info
       shell: bash
@@ -93,6 +99,12 @@ jobs:
       shell: bash
       run: |
         python3 scripts/run_tests_one_by_one.py build/release/test/unittest --tests-per-invocation 100
+
+    - name: Test pkg-config support
+      shell: bash
+      run: |
+        (examples/embedded-c && make pkg-config)
+        (examples/embedded-c++ && make pkg-config)
 
  linux-release:
     name: Linux Release (full suite)
